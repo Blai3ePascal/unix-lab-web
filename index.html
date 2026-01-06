@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Laboratorio UNIX - UCM</title>
-    <script src="libv86.js"></script>
+    
+    <script src="https://unpkg.com/v86@latest/build/libv86.js"></script>
     
     <style>
         body { margin: 0; background: #050505; color: #0f0; font-family: 'Consolas', monospace; overflow: hidden; }
@@ -48,22 +49,26 @@
         "use strict";
 
         window.onload = function() {
-            // DIAGNÓSTICO DE ERROR
+            // VERIFICACIÓN DE CARGA
             if (typeof V86Starter === "undefined") {
-                alert("ERROR: No se ha cargado 'libv86.js'.\nVerifica que has subido ese archivo a GitHub junto con el index.html.");
+                alert("ERROR DE RED: El navegador no ha podido cargar el motor v86 desde unpkg.com.\nComprueba si tienes un bloqueador de anuncios activado.");
                 return;
             }
 
             var emulator = new V86Starter({
-                // TODO EN LOCAL
-                wasm_path: "v86.wasm",
-                bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
-                vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
+                // 1. MOTOR Y BIOS DESDE LA NUBE (UNPKG)
+                wasm_path: "https://unpkg.com/v86@latest/build/v86.wasm",
+                bios: { url: "https://unpkg.com/v86@latest/bios/seabios.bin" },
+                vga_bios: { url: "https://unpkg.com/v86@latest/bios/vgabios.bin" },
+
+                // 2. DISCO DURO LOCAL (TU ARCHIVO)
+                // Asegúrate de que en GitHub se llame EXACTAMENTE "disco.img.gz"
                 hda: { 
                     url: "disco.img.gz", 
                     async: true,
                     size: 2 * 1024 * 1024 * 1024 
                 },
+                
                 memory_size: 256 * 1024 * 1024,
                 vga_memory_size: 8 * 1024 * 1024,
                 screen_container: document.getElementById("screen"),

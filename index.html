@@ -2,116 +2,70 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laboratorio UNIX - UCM</title>
-    <script src="https://copy.sh/v86/build/libv86.js"></script>
+    <script src="./libv86.js"></script>
     <style>
-        body { margin: 0; background: #050505; color: #0f0; font-family: 'Consolas', 'Courier New', monospace; overflow: hidden; }
-        #screen_container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
-        canvas { background: #000; box-shadow: 0 0 30px rgba(0,255,0,0.15); border: 1px solid #333; }
-        #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: rgba(0, 15, 0, 0.95); border-right: 2px solid #0f0; padding: 20px; transform: translateX(-100%); transition: transform 0.3s ease-in-out; z-index: 1000; display: flex; flex-direction: column; gap: 15px; box-shadow: 5px 0 15px rgba(0,0,0,0.8); }
+        body { margin: 0; background: #050505; color: #0f0; font-family: 'Consolas', monospace; overflow: hidden; }
+        #screen_container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        canvas { background: #000; border: 1px solid #333; }
+        #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: rgba(0, 15, 0, 0.95); border-right: 2px solid #0f0; padding: 20px; transform: translateX(-100%); transition: transform 0.3s; z-index: 1000; display: flex; flex-direction: column; gap: 15px; }
         #sidebar.visible { transform: translateX(0); }
-        h3 { border-bottom: 1px dashed #0f0; padding-bottom: 10px; margin-top: 0; text-align: center; letter-spacing: 2px; }
-        #menu-btn { position: fixed; left: 20px; top: 20px; z-index: 1001; background: #000; border: 1px solid #0f0; color: #0f0; padding: 8px 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
-        #menu-btn:hover { background: #0f0; color: #000; }
-        button.panel-btn { background: #000; color: #0f0; border: 1px solid #005500; padding: 12px; cursor: pointer; text-align: left; transition: all 0.2s; font-family: inherit; font-size: 14px; display: flex; justify-content: space-between; }
-        button.panel-btn:hover { background: #0f0; color: #000; border-color: #0f0; }
-        .inverted { filter: invert(100%) hue-rotate(180deg); }
-        .note { font-size: 0.85em; color: #aaa; border: 1px solid #333; padding: 10px; margin-top: 10px; line-height: 1.4; background: #0a0a0a; }
-        #timer-box { margin-top: auto; text-align: center; border-top: 1px dashed #444; padding-top: 15px; color: #888; }
-        #time-left { color: #fff; font-weight: bold; font-size: 1.2em; display: block; margin-top: 5px;}
+        h3 { border-bottom: 1px dashed #0f0; padding-bottom: 10px; text-align: center; }
+        button { background: #000; color: #0f0; border: 1px solid #005500; padding: 10px; cursor: pointer; width: 100%; text-align: left; margin-bottom: 5px; }
+        button:hover { background: #0f0; color: #000; }
+        #menu-btn { position: fixed; left: 20px; top: 20px; z-index: 1001; background: #000; border: 1px solid #0f0; color: #0f0; padding: 5px 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <button id="menu-btn" onclick="toggleSidebar()">[+] MENU CONTROL</button>
-
+    <button id="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('visible')">[+] MENU</button>
     <div id="sidebar">
         <h3>:: SISTEMA UCM ::</h3>
-        <button class="panel-btn" onclick="toggleFullscreen()"><span>Pantalla Completa</span> <span>[ ]</span></button>
-        <button class="panel-btn" onclick="takeScreenshot()"><span>Captura Pantalla</span> <span>📷</span></button>
-        <button class="panel-btn" onclick="changeZoom(0.1)"><span>Aumentar Zoom</span> <span>(+)</span></button>
-        <button class="panel-btn" onclick="changeZoom(-0.1)"><span>Disminuir Zoom</span> <span>(-)</span></button>
-        <button class="panel-btn" onclick="toggleInvert()"><span>Invertir Colores</span> <span>◑</span></button>
-        
-        <div class="note">
-            ℹ️ <b>SISTEMA AISLADO</b><br>
-            Este laboratorio corre en tu navegador. No tiene conexión al exterior.<br>
-            Para guardar evidencias, usa el botón de <b>Captura de Pantalla</b>.
-        </div>
-
-        <button class="panel-btn" onclick="hardReset()" style="color:#ff5555; border-color:#ff5555; margin-top: 10px;">
-            <span>⚠️ REINICIO TOTAL</span>
-        </button>
-        
-        <div id="timer-box">
-            SESIÓN ACTIVA<br>
-            <span id="time-left">Cargando...</span>
-        </div>
+        <button onclick="requestFullScreen()">Pantalla Completa</button>
+        <button onclick="takeScreenshot()">Captura Pantalla</button>
+        <button onclick="location.reload()" style="color:red; border-color:red">REINICIAR</button>
     </div>
-
     <div id="screen_container">
-        <div id="screen">
-            <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
-        </div>
+        <div id="screen"></div>
     </div>
 
     <script>
         "use strict";
-
+        
         window.onload = function() {
+            // VERIFICACIÓN DE SEGURIDAD
+            if (typeof V86Starter === "undefined") {
+                alert("ERROR CRÍTICO: No se encuentra 'libv86.js'.\nAsegúrate de que el archivo está en la misma carpeta que index.html en GitHub.");
+                return;
+            }
+
             var emulator = new V86Starter({
-                // MOTOR WEB (Garantiza que funcione el cerebro)
-                wasm_path: "https://copy.sh/v86/build/v86.wasm",
-                bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
-                vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
-                
-                // TU DISCO DURO LOCAL (Garantiza velocidad y tu personalización)
-                hda: { 
-                    url: "disco.img.gz", 
-                    async: true,
-                    size: 2 * 1024 * 1024 * 1024
-                },
-                
+                wasm_path: "./v86.wasm",
                 memory_size: 256 * 1024 * 1024,
                 vga_memory_size: 8 * 1024 * 1024,
                 screen_container: document.getElementById("screen"),
+                bios: { url: "./seabios.bin" },
+                vga_bios: { url: "./vgabios.bin" },
+                hda: { 
+                    url: "./disco.img.gz",
+                    async: true,
+                    size: 2 * 1024 * 1024 * 1024
+                },
                 autostart: true
             });
         };
 
-        const SESSION_DURATION = 3 * 60 * 60 * 1000; 
-
-        function checkSession() {
-            let start = localStorage.getItem('ucm_unix_session');
-            let now = Date.now();
-            if (!start) { localStorage.setItem('ucm_unix_session', now); start = now; }
-            let remaining = SESSION_DURATION - (now - parseInt(start));
-
-            if (remaining <= 0) {
-                localStorage.removeItem('ucm_unix_session');
-                alert("⏱️ La sesión ha expirado. Reiniciando...");
-                location.reload();
-            } else {
-                let totalSeconds = Math.floor(remaining / 1000);
-                let h = Math.floor(totalSeconds / 3600);
-                let m = Math.floor((totalSeconds % 3600) / 60);
-                let s = totalSeconds % 60;
-                document.getElementById('time-left').innerText = `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            }
+        function requestFullScreen() {
+            var el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen();
         }
-        setInterval(checkSession, 1000);
-        checkSession(); 
-
-        let currentZoom = 1;
-        let isInverted = false;
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('visible'); }
-        function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.log(e)); else if (document.exitFullscreen) document.exitFullscreen(); }
-        function changeZoom(d) { currentZoom += d; if (currentZoom < 0.5) currentZoom = 0.5; if (currentZoom > 2.0) currentZoom = 2.0; document.getElementById('screen_container').style.transform = `scale(${currentZoom})`; }
-        function toggleInvert() { isInverted = !isInverted; let s = document.getElementById('screen_container'); if(isInverted) s.classList.add('inverted'); else s.classList.remove('inverted'); }
-        function hardReset() { if(confirm("¿Seguro? Se borrará todo.")) { localStorage.removeItem('ucm_unix_session'); location.reload(); } }
-        function takeScreenshot() { 
-            let canvas = document.querySelector("canvas"); 
-            if (canvas) { let link = document.createElement('a'); link.download = `UCM-${Date.now()}.png`; link.href = canvas.toDataURL(); link.click(); }
+        function takeScreenshot() {
+             var canvas = document.querySelector("canvas");
+             if(canvas) {
+                 var a = document.createElement("a");
+                 a.download = "Captura-UCM.png";
+                 a.href = canvas.toDataURL();
+                 a.click();
+             }
         }
     </script>
 </body>

@@ -3,57 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <title>Laboratorio UNIX - UCM</title>
-    <script src="./libv86.js"></script>
+    <script src="https://copy.sh/v86/build/libv86.js"></script>
+    
     <style>
         body { margin: 0; background: #050505; color: #0f0; font-family: 'Consolas', monospace; overflow: hidden; }
         #screen_container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        canvas { background: #000; border: 1px solid #333; }
+        canvas { background: #000; border: 1px solid #333; box-shadow: 0 0 30px rgba(0,255,0,0.2); }
+        
+        /* Panel Lateral */
         #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: rgba(0, 15, 0, 0.95); border-right: 2px solid #0f0; padding: 20px; transform: translateX(-100%); transition: transform 0.3s; z-index: 1000; display: flex; flex-direction: column; gap: 15px; }
         #sidebar.visible { transform: translateX(0); }
-        h3 { border-bottom: 1px dashed #0f0; padding-bottom: 10px; text-align: center; }
-        button { background: #000; color: #0f0; border: 1px solid #005500; padding: 10px; cursor: pointer; width: 100%; text-align: left; margin-bottom: 5px; }
+        
+        button { background: #000; color: #0f0; border: 1px solid #005500; padding: 12px; cursor: pointer; text-align: left; width: 100%; margin-bottom: 5px; font-family: inherit; }
         button:hover { background: #0f0; color: #000; }
-        #menu-btn { position: fixed; left: 20px; top: 20px; z-index: 1001; background: #000; border: 1px solid #0f0; color: #0f0; padding: 5px 10px; cursor: pointer; }
+        #menu-btn { position: fixed; left: 20px; top: 20px; z-index: 1001; background: #000; border: 1px solid #0f0; color: #0f0; padding: 8px 15px; cursor: pointer; font-weight: bold; }
+        
+        .note { font-size: 0.8em; color: #aaa; border: 1px solid #333; padding: 10px; background: #111; }
+        #timer-box { margin-top: auto; text-align: center; border-top: 1px dashed #444; padding-top: 15px; color: #fff; font-size: 1.2em;}
     </style>
 </head>
 <body>
     <button id="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('visible')">[+] MENU</button>
+
     <div id="sidebar">
-        <h3>:: SISTEMA UCM ::</h3>
-        <button onclick="requestFullScreen()">Pantalla Completa</button>
-        <button onclick="takeScreenshot()">Captura Pantalla</button>
-        <button onclick="location.reload()" style="color:red; border-color:red">REINICIAR</button>
+        <h3 style="text-align:center; border-bottom:1px dashed #0f0; padding-bottom:10px;">:: SISTEMA UCM ::</h3>
+        <button onclick="requestFullScreen()">[ ] Pantalla Completa</button>
+        <button onclick="takeScreenshot()">📷 Captura Pantalla</button>
+        <button onclick="hardReset()" style="color:#ff5555; border-color:#ff5555">⚠️ REINICIAR</button>
+        
+        <div class="note">
+            ℹ️ <b>INFO:</b> Sistema aislado.<br>
+            Usa el botón de captura para guardar evidencias.
+        </div>
+        
+        <div id="timer-box">
+            TIEMPO: <span id="time-left">--:--</span>
+        </div>
     </div>
+
     <div id="screen_container">
         <div id="screen"></div>
     </div>
 
     <script>
         "use strict";
-        
-        window.onload = function() {
-            // VERIFICACIÓN DE SEGURIDAD
-            if (typeof V86Starter === "undefined") {
-                alert("ERROR CRÍTICO: No se encuentra 'libv86.js'.\nAsegúrate de que el archivo está en la misma carpeta que index.html en GitHub.");
-                return;
-            }
 
+        window.onload = function() {
             var emulator = new V86Starter({
-                wasm_path: "./v86.wasm",
+                // 2. RUTAS A LA NUBE (Esto arregla el error "V86Starter undefined")
+                wasm_path: "https://copy.sh/v86/build/v86.wasm",
+                bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
+                vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
+
+                // 3. RUTA A TU ARCHIVO LOCAL (Esto carga TU sistema)
+                hda: { 
+                    url: "disco.img.gz", 
+                    async: true,
+                    size: 2 * 1024 * 1024 * 1024 // 2GB
+                },
+                
                 memory_size: 256 * 1024 * 1024,
                 vga_memory_size: 8 * 1024 * 1024,
                 screen_container: document.getElementById("screen"),
-                bios: { url: "./seabios.bin" },
-                vga_bios: { url: "./vgabios.bin" },
-                hda: { 
-                    url: "./disco.img.gz",
-                    async: true,
-                    size: 2 * 1024 * 1024 * 1024
-                },
                 autostart: true
             });
         };
 
+        // --- FUNCIONES EXTRA ---
         function requestFullScreen() {
             var el = document.documentElement;
             if (el.requestFullscreen) el.requestFullscreen();
@@ -62,11 +78,18 @@
              var canvas = document.querySelector("canvas");
              if(canvas) {
                  var a = document.createElement("a");
-                 a.download = "Captura-UCM.png";
-                 a.href = canvas.toDataURL();
-                 a.click();
+                 a.download = "Captura-UCM.png"; a.href = canvas.toDataURL(); a.click();
              }
         }
+        function hardReset() {
+            if(confirm("¿Reiniciar sistema?")) location.reload();
+        }
+        
+        // Timer simple
+        setInterval(function() {
+            var d = new Date();
+            document.getElementById("time-left").innerText = d.toLocaleTimeString();
+        }, 1000);
     </script>
 </body>
 </html>

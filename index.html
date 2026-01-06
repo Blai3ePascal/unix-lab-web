@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laboratorio UNIX - UCM</title>
-    <script src="https://copy.sh/v86/build/libv86.js"></script>
+    <script src="libv86.js"></script>
     <style>
         body { margin: 0; background: #050505; color: #0f0; font-family: 'Consolas', 'Courier New', monospace; overflow: hidden; }
         #screen_container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
@@ -58,20 +58,22 @@
     <script>
         "use strict";
 
-        var emulator = new V86Starter({
-            wasm_path: "https://copy.sh/v86/build/v86.wasm",
-            memory_size: 256 * 1024 * 1024,
-            vga_memory_size: 8 * 1024 * 1024,
-            screen_container: document.getElementById("screen"),
-            bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
-            vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
-            hda: { 
-                url: "disco.img.gz",
-                async: true,
-                size: 2 * 1024 * 1024 * 1024
-            },
-            autostart: true
-        });
+        window.onload = function() {
+            var emulator = new V86Starter({
+                wasm_path: "v86.wasm",
+                memory_size: 256 * 1024 * 1024,
+                vga_memory_size: 8 * 1024 * 1024,
+                screen_container: document.getElementById("screen"),
+                bios: { url: "seabios.bin" },
+                vga_bios: { url: "vgabios.bin" },
+                hda: { 
+                    url: "disco.img.gz",
+                    async: true,
+                    size: 2 * 1024 * 1024 * 1024
+                },
+                autostart: true
+            });
+        };
 
         const SESSION_DURATION = 3 * 60 * 60 * 1000; 
 

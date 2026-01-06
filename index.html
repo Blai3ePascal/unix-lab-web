@@ -10,7 +10,6 @@
         #screen_container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
         canvas { background: #000; border: 1px solid #333; box-shadow: 0 0 30px rgba(0,255,0,0.2); }
         
-        /* Panel Lateral */
         #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: rgba(0, 15, 0, 0.95); border-right: 2px solid #0f0; padding: 20px; transform: translateX(-100%); transition: transform 0.3s; z-index: 1000; display: flex; flex-direction: column; gap: 15px; }
         #sidebar.visible { transform: translateX(0); }
         
@@ -50,12 +49,12 @@
 
         window.onload = function() {
             var emulator = new V86Starter({
-                // 2. RUTAS A LA NUBE (Esto arregla el error "V86Starter undefined")
+                // MOTOR: Lo traemos de internet (CDN) para evitar errores de archivo no encontrado
                 wasm_path: "https://copy.sh/v86/build/v86.wasm",
                 bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
                 vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
 
-                // 3. RUTA A TU ARCHIVO LOCAL (Esto carga TU sistema)
+                // DISCO: Usamos TU archivo local (el que subiste de 95MB)
                 hda: { 
                     url: "disco.img.gz", 
                     async: true,
@@ -69,7 +68,6 @@
             });
         };
 
-        // --- FUNCIONES EXTRA ---
         function requestFullScreen() {
             var el = document.documentElement;
             if (el.requestFullscreen) el.requestFullscreen();
@@ -85,7 +83,6 @@
             if(confirm("¿Reiniciar sistema?")) location.reload();
         }
         
-        // Timer simple
         setInterval(function() {
             var d = new Date();
             document.getElementById("time-left").innerText = d.toLocaleTimeString();

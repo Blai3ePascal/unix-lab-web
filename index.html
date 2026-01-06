@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laboratorio UNIX - UCM</title>
-    <script src="libv86.js"></script>
+    <script src="https://copy.sh/v86/build/libv86.js"></script>
     <style>
         body { margin: 0; background: #050505; color: #0f0; font-family: 'Consolas', 'Courier New', monospace; overflow: hidden; }
         #screen_container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
@@ -60,17 +60,21 @@
 
         window.onload = function() {
             var emulator = new V86Starter({
-                wasm_path: "v86.wasm",
-                memory_size: 256 * 1024 * 1024,
-                vga_memory_size: 8 * 1024 * 1024,
-                screen_container: document.getElementById("screen"),
-                bios: { url: "seabios.bin" },
-                vga_bios: { url: "vgabios.bin" },
+                // MOTOR WEB (Garantiza que funcione el cerebro)
+                wasm_path: "https://copy.sh/v86/build/v86.wasm",
+                bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
+                vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
+                
+                // TU DISCO DURO LOCAL (Garantiza velocidad y tu personalización)
                 hda: { 
-                    url: "disco.img.gz",
+                    url: "disco.img.gz", 
                     async: true,
                     size: 2 * 1024 * 1024 * 1024
                 },
+                
+                memory_size: 256 * 1024 * 1024,
+                vga_memory_size: 8 * 1024 * 1024,
+                screen_container: document.getElementById("screen"),
                 autostart: true
             });
         };
@@ -80,79 +84,34 @@
         function checkSession() {
             let start = localStorage.getItem('ucm_unix_session');
             let now = Date.now();
-
-            if (!start) {
-                localStorage.setItem('ucm_unix_session', now);
-                start = now;
-            }
-
-            let elapsed = now - parseInt(start);
-            let remaining = SESSION_DURATION - elapsed;
+            if (!start) { localStorage.setItem('ucm_unix_session', now); start = now; }
+            let remaining = SESSION_DURATION - (now - parseInt(start));
 
             if (remaining <= 0) {
                 localStorage.removeItem('ucm_unix_session');
-                alert("⏱️ La sesión de laboratorio ha expirado.\nEl sistema se reiniciará para el siguiente alumno.");
+                alert("⏱️ La sesión ha expirado. Reiniciando...");
                 location.reload();
             } else {
                 let totalSeconds = Math.floor(remaining / 1000);
                 let h = Math.floor(totalSeconds / 3600);
                 let m = Math.floor((totalSeconds % 3600) / 60);
                 let s = totalSeconds % 60;
-                document.getElementById('time-left').innerText = 
-                    `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                document.getElementById('time-left').innerText = `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }
         }
-        
         setInterval(checkSession, 1000);
         checkSession(); 
 
         let currentZoom = 1;
         let isInverted = false;
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('visible');
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(e => console.log(e));
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-            }
-        }
-
-        function changeZoom(delta) {
-            currentZoom += delta;
-            if (currentZoom < 0.5) currentZoom = 0.5;
-            if (currentZoom > 2.0) currentZoom = 2.0;
-            document.getElementById('screen_container').style.transform = `scale(${currentZoom})`;
-        }
-
-        function toggleInvert() {
-            isInverted = !isInverted;
-            let screen = document.getElementById('screen_container');
-            if(isInverted) screen.classList.add('inverted');
-            else screen.classList.remove('inverted');
-        }
-
-        function hardReset() {
-            if(confirm("¿Estás seguro de reiniciar?\n\nSe perderá todo el trabajo de la sesión actual.")) {
-                localStorage.removeItem('ucm_unix_session');
-                location.reload();
-            }
-        }
-
-        function takeScreenshot() {
-            let canvas = document.querySelector("canvas");
-            if (canvas) {
-                let link = document.createElement('a');
-                let timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                link.download = `Evidencia-UCM-${timestamp}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-            } else {
-                alert("Espera a que el sistema arranque para tomar la captura.");
-            }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('visible'); }
+        function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.log(e)); else if (document.exitFullscreen) document.exitFullscreen(); }
+        function changeZoom(d) { currentZoom += d; if (currentZoom < 0.5) currentZoom = 0.5; if (currentZoom > 2.0) currentZoom = 2.0; document.getElementById('screen_container').style.transform = `scale(${currentZoom})`; }
+        function toggleInvert() { isInverted = !isInverted; let s = document.getElementById('screen_container'); if(isInverted) s.classList.add('inverted'); else s.classList.remove('inverted'); }
+        function hardReset() { if(confirm("¿Seguro? Se borrará todo.")) { localStorage.removeItem('ucm_unix_session'); location.reload(); } }
+        function takeScreenshot() { 
+            let canvas = document.querySelector("canvas"); 
+            if (canvas) { let link = document.createElement('a'); link.download = `UCM-${Date.now()}.png`; link.href = canvas.toDataURL(); link.click(); }
         }
     </script>
 </body>

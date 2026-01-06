@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Laboratorio UNIX - UCM</title>
-    <script src="https://copy.sh/v86/build/libv86.js"></script>
+    <script src="libv86.js"></script>
     
     <style>
         body { margin: 0; background: #050505; color: #0f0; font-family: 'Consolas', monospace; overflow: hidden; }
@@ -48,19 +48,22 @@
         "use strict";
 
         window.onload = function() {
+            // DIAGNÓSTICO DE ERROR
+            if (typeof V86Starter === "undefined") {
+                alert("ERROR: No se ha cargado 'libv86.js'.\nVerifica que has subido ese archivo a GitHub junto con el index.html.");
+                return;
+            }
+
             var emulator = new V86Starter({
-                // MOTOR: Lo traemos de internet (CDN) para evitar errores de archivo no encontrado
-                wasm_path: "https://copy.sh/v86/build/v86.wasm",
+                // TODO EN LOCAL
+                wasm_path: "v86.wasm",
                 bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
                 vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
-
-                // DISCO: Usamos TU archivo local (el que subiste de 95MB)
                 hda: { 
                     url: "disco.img.gz", 
                     async: true,
-                    size: 2 * 1024 * 1024 * 1024 // 2GB
+                    size: 2 * 1024 * 1024 * 1024 
                 },
-                
                 memory_size: 256 * 1024 * 1024,
                 vga_memory_size: 8 * 1024 * 1024,
                 screen_container: document.getElementById("screen"),
